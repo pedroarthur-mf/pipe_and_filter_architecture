@@ -1,0 +1,343 @@
+Model SysADLArchitecture;
+package SysADL.types {
+	value type Int {
+	}
+	value type Boolean {
+	}
+	value type String {
+	}
+	value type Void {
+	}
+	value type Real {
+	}
+datatype ListaPalavras {
+		attributes:
+		palavras : String[];
+	}
+datatype Atributos {
+		attributes:
+		
+		filtro : String;
+		Ordem : Ordenacao;
+	}
+	enum Ordenacao {
+		ASCENDENTE, DESCENDENTE
+	}
+datatype Arquivo {
+	}
+}
+package Portas {
+	import SysADL.types;
+	
+	port def ListaPlavrasOPT {
+		flow out ListaPalavras
+	}
+	port def ListaPalavrasIPT {
+		flow in ListaPalavras
+	}
+	
+port def TextoIPT {
+		flow in String
+	}
+	
+	port def TextoOPT {
+		flow out String
+	}
+	port def ArquivoIPT {
+		flow in Arquivo
+	}
+port def OrdenacaoITP {
+		flow in Ordenacao
+	}
+	port def OrdenacaoOTP {
+		flow out Ordenacao
+	}
+}
+package Conectores {
+	import Portas;
+	
+	connector def ConectorListaCN {
+		participants:
+		~OutputLista : ListaPlavrasOPT;
+		~InputLista : ListaPalavrasIPT;
+		flows:
+		ListaPalavras from OutputLista to InputLista
+	}
+connector def ConectorTextoCN {
+		participants:
+		~OutputTexto : TextoOPT;
+		~ImputTexto : TextoIPT;
+		flows:
+		String from OutputTexto to ImputTexto
+	}
+	connector def ConectorOrdemCN {
+		participants:
+		~ImputOrdem : OrdenacaoITP;
+		~OutputOrdem : OrdenacaoOTP;
+		flows:
+		Ordenacao from ImputOrdem to OutputOrdem
+	}
+}
+Requirement LerArquivoFR ( 0 ) {
+	text =
+	"O sistema deve ser capaz de ler o arquivo de texto fornecido pelo usu�rio."
+	}
+Requirement AnalisarTextoFR ( 1 ) {
+	text = "O sistema deve ser capaz de analisar o texto contido no arquivo lido"
+	Requirement SepararTextoFR ( 4 ) {
+		text = "O sistema deve ser capas de separar o texto em palavras." }
+	Requirement FiltrarPalavrasFR ( 5 ) {
+		text =
+		"O sistema deve ser capaz de filtrar  as palavras que come�am com uma determinada letra ou sequ�ncia de caracteres."
+		}
+	Requirement OrdenarPalavarasFR ( 6 ) {
+		text = "O sistema deve ser capaz de Ordenar as palavras filtradas."
+		derive OrdenarAscendenteFR, OrdenarDescendente;
+	}
+}
+Requirement OrdenarAscendenteFR ( 7 ) {
+	text =
+	"O sistema deve ser capaz de Ordenar as palavras filtradas em ordem ascendente."
+}
+Requirement OrdenarDescendente ( 8 ) {
+	text =
+	"O sistema deve ser capaz de Ordenar as palavras filtradas em ordem Decrescente."
+}
+Requirement ExibirResultadosFR ( 3 ) {
+	text =
+	"O sistema deve ser capaz de exibir para o usu�rio as palavras resultantes da an�lise do texto"
+	}
+package Componentes {
+	import Portas;
+	import SysADL.types;
+	import Conectores;
+	boundary component def LeitorArquivo1CP {
+		ports:
+		newPort : ArquivoIPT;
+		newPort : TextoOPT;
+	}
+	boundary component def ExibidorResultadoCP {
+		ports:
+		newPort : ListaPalavrasIPT;
+	}
+	component def FiltroPalavrasCP {
+		ports:
+		newPort : ListaPalavrasIPT;
+		newPort : ListaPlavrasOPT;
+		newPort : TextoIPT;
+	}
+	component def Sistema {
+		ports:
+		listaFonte : ListaPalavrasIPT;
+		configuration {
+			components:
+			ExibidorResultadoCP : ExibidorResultadoCP {
+				using
+				ports:
+				list6 : ListaPalavrasIPT;
+			}
+			
+			
+			OrdenadorPalavrasCP : OrdenadorPalavrasCP {
+				using
+				ports:
+				ordem2 : OrdenacaoITP;
+				list4 : ListaPalavrasIPT;
+				list5 : ListaPlavrasOPT;
+			}
+			LeitorOrdemCP : LeitorOrdemCP {
+				using
+				ports:
+				ordem1 : OrdenacaoOTP;
+				odenacaoIn : OrdenacaoITP;
+			}
+			LeitorFiltroCP : LeitorFiltroCP {
+				using
+				ports:
+				filtro : TextoIPT;
+				filtro1 : TextoOPT;
+			}
+			FiltroPalavrasCP : FiltroPalavrasCP {
+				using
+				ports:
+				list2 : ListaPalavrasIPT;
+				list3 : ListaPlavrasOPT;
+				filtro2 : TextoIPT;
+			}
+			
+			
+			
+			
+			connectors:
+			OrdemCN : ConectorOrdemCN bindings ordem1 = ordem2;
+			
+			Lista3CN : ConectorListaCN bindings list5 = list6;
+			
+			Lista2CN : ConectorListaCN bindings list3 = list4;
+			FiltroCN : ConectorTextoCN bindings filtro1 = filtro2;
+		
+			
+			
+			
+		delegations:
+			list2 to listaFonte
+		}
+	}
+	component def SeparadorPalavrasCP {
+		ports:
+		
+		newPort : ListaPlavrasOPT;
+	
+		
+	newPort : TextoIPT [ 1, -1 ];
+	}
+	component def OrdenadorPalavrasCP {
+		ports:
+		newPort : OrdenacaoITP;
+		newPort : ListaPalavrasIPT;
+		newPort : ListaPlavrasOPT;
+	}
+	boundary component def LeitorFiltroCP {
+		ports:
+		newPort : ArquivoIPT;
+		newPort : TextoOPT;
+	}
+	boundary component def LeitorOrdemCP {
+		ports:
+		newPort : OrdenacaoOTP;
+		newPort : ArquivoIPT;
+	}
+activity def SepararAC ( textoOriginal : String ) : ( lista : ListaPalavras ) {
+		body {
+		actions : SepararPalavrasAN : SepararPalavrasAN {
+				using pins : textoOriginal : String;
+			}
+			delegate textoOriginal to textoOriginal
+			delegate lista to SepararPalavrasAN
+		}
+	}
+	activity def OrdenarAC ( inLista : ListaPalavras, ordem : Ordenacao ) : ( outLista
+	: ListaPalavras ) {
+		body {
+		actions : OrdenarAscAN : OrdenarAscAN {
+				using pins : ordem : Ordenacao;
+				lista : ListaPalavras;
+			}
+			OrdenarDescAN : OrdenarDescAN {
+				using pins : lista2 : ListaPalavras;
+				ordem2 : Ordenacao;
+			}
+			delegate ordem to ordem
+			delegate ordem to ordem2
+			delegate inLista to lista
+			delegate inLista to lista2
+			delegate outLista to OrdenarAscAN
+			delegate outLista to OrdenarDescAN
+		}
+	}
+	activity def FiltrarAC ( inLista : ListaPalavras, filtro : String ) : ( outLista :
+	ListaPalavras ) {
+		body {
+		actions : FiltrarPalavras : FiltrarPalavras {
+				using pins : lista : ListaPalavras;
+				filtro : String;
+			}
+			delegate inLista to lista
+			delegate filtro to filtro
+			delegate outLista to FiltrarPalavras
+		}
+	}
+	action def SepararPalavrasAN ( textoOriginal : String ) : ListaPalavras {
+	constraint : pre-condition PosSepararEQ post-condition PreSepararEQ
+		delegate textoOriginal to textoOriginal
+		delegate SepararPalavrasAN to lista
+		delegate SepararPalavrasAN to lista2
+		delegate textoOriginal to textoOriginal2
+	}
+	action def FiltrarPalavras ( inLista : ListaPalavras, filtro : String ) :
+	ListaPalavras {
+	constraint : post-condition PosFiltrarEQ
+		delegate inLista to inLista
+		delegate filtro to filtro
+		delegate FiltrarPalavras to outLista
+	}
+	action def OrdenarAscAN ( lista : ListaPalavras, ordem : Ordenacao ) :
+	ListaPalavras {
+	constraint : post-condition PosOrdemEQ
+		delegate lista to inLista
+		delegate ordem to ordem
+		delegate OrdenarAscAN to outLista
+	}
+	action def OrdenarDescAN ( lista : ListaPalavras, ordem : Ordenacao ) :
+	ListaPalavras {
+	constraint : post-condition PosOrdemEQ
+		delegate lista to inLista
+		delegate ordem to ordem
+		delegate OrdenarDescAN to outLista
+	}
+	constraint PosSepararEQ ( textoOriginal : String ) : ( lista : ListaPalavras ) {
+		equation = "count(' ', textoOriginal)+1 == size(lista)"
+	}
+		constraint PreSepararEQ ( textoOriginal2 : String ) : ( lista2 : ListaPalavras ) {
+		equation = "size(lista2) == 0 && textoOriginal2 != null"
+	}
+	
+	
+constraint PosFiltrarEQ ( inLista : ListaPalavras, filtro : String ) : ( outLista :
+	ListaPalavras ) {
+		equation = "size(inLista) >= size(outLista)"
+	}
+constraint PosOrdemEQ ( inLista : ListaPalavras, ordem : Ordenacao ) : (
+	outLista : ListaPalavras ) {
+		equation = "size(inLista) == size(outLista)"
+	}
+component def LeitorArquivo2CP {
+		ports:
+		newPort : TextoIPT;
+		newPort : TextoOPT;
+	}
+	boundary component def LeitorArquivo3CP {
+		ports:
+		newPort : ArquivoIPT;
+		newPort : TextoOPT;
+	}
+component def Agregador {
+	configuration {
+			components:
+			LeitorArquivo1CP : LeitorArquivo1CP {
+				using
+				ports:
+				newPort : ArquivoIPT;
+				texto3 : TextoOPT;
+			}
+			LeitorArquivo2CP : LeitorArquivo2CP {
+				using
+				ports:
+				newPort : ArquivoIPT;
+				texto1 : TextoOPT;
+			}
+			LeitorArquivo3CP : LeitorArquivo3CP {
+				using
+				ports:
+				newPort : ArquivoIPT;
+				texto2 : TextoOPT;
+			}
+			Sistema : Sistema {
+				using
+				ports:
+				listain : ListaPalavrasIPT;
+			}
+			SeparadorPalavrasCP : SeparadorPalavrasCP {
+				using
+				ports:
+				listaout : ListaPlavrasOPT;
+				textoin : TextoIPT;
+			}
+			connectors:
+			Leitor2CN : ConectorTextoCN bindings texto2 = textoin;
+			ListaCN : ConectorListaCN bindings listaout = listain;
+			Leitor1CN : ConectorTextoCN bindings texto1 = textoin;
+			Leitor2CN : ConectorTextoCN bindings texto3 = textoin;
+		}
+	}
+}

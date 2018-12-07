@@ -14,12 +14,7 @@ datatype ListaPalavras {
 		attributes:
 		palavras : String[];
 	}
-datatype Atributos {
-		attributes:
-		
-		filtro : String;
-		Ordem : Ordenacao;
-	}
+
 	enum Ordenacao {
 		ASCENDENTE, DESCENDENTE
 	}
